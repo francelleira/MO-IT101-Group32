@@ -14,7 +14,7 @@ import java.util.ArrayList;
  *
  * @author admin
  */
-public class MotorPH {
+public class MotorPH {  
     
     // This method checks if the employee number in the user input is part of the MotorPH employee data
     public static boolean employeeExists(String empNum) {
