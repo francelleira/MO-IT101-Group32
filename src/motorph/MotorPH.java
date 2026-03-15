@@ -14,90 +14,28 @@ import java.util.ArrayList;
  *
  * @author admin
  */
-public class MotorPH {  
+public class MotorPH {
     
-    // This method checks if the employee number in the user input is part of the MotorPH employee data
-    public static boolean employeeExists(String empNum) {
-        
-        try {
-            String filePath = "C:\\Users\\admin\\Documents\\NetBeansProjects\\MotorPH\\src\\motorph\\MotorPH_Employee_Details.csv";
-            //Open the CSV file for reading
-            BufferedReader br = new BufferedReader(new FileReader(filePath));
-            
-            String line;
-            
-            br.readLine(); // Read the first line (header) and skip it
-            
-            //Loop through the remaining lines of the file
-            while ((line = br.readLine()) != null) {
-                
-                //Split the line into columns using comma as delimiter
-                String[] data = line.split(",");
-                
-                //data[0] contains the employee number column
-                if (data[0].equals(empNum)) {
-                    br.close(); //close the file reader
-                    return true; // Return true if the employee number matches the user input   
-                }
-            }
-            
-            br.close(); // Close the file reader after finishing the loop
-        }
-        catch (IOException e) {
-            System.out.println("Error reading this file");
-        }
-        return false; // Return false if no matching employee number was found
-    }
+    // File Paths
+    static final String EMPLOYEE_FILE = "MotorPH_Employee_Details.csv";
+    static final String ATTENDANCE_FILE = "Attendance_Record.csv";
     
-    // This method displays the employee details consisting of their employee number, name, and birthday
-    public static boolean displayEmployeeDetails(String empNum) {
-
-        try {
-            String filePath = "C:\\Users\\admin\\Documents\\NetBeansProjects\\MotorPH\\src\\motorph\\MotorPH_Employee_Details.csv";
-            //Open the CSV file for reading
-            BufferedReader br = new BufferedReader(new FileReader(filePath));// Open the CSV file
-
-            String line;
-
-            // Skip the header row
-            br.readLine();
-
-            // Loop through each row of the file
-            while ((line = br.readLine()) != null) {
-
-                // Split the row into columns
-                String[] data = line.split(",");
-
-                // data[0] = employee number
-                // data[1] = last name
-                // data[2] = first name
-                // data[3] = birthday
-                if (data[0].equals(empNum)) {
-
-                    // Combine first name and last name
-                    String fullName = data[2] + " " + data[1];
-
-                    // Display employee details
-                    System.out.println("=== Employee Details ===");
-                    System.out.println("Employee Number: " + data[0]);
-                    System.out.println("Name: " + fullName);
-                    System.out.println("Birthday: " + data[3]);
-
-                    br.close();
-
-                    return true;
-                }
-            }
-
-            br.close();
-
-        } catch (Exception e) {
-            System.out.println("Error reading employee file.");
-        }
-
-        // If the employee number was not found
-        return false;
-    }
+    // Employee details CSV file column indexes
+    static final int COL_EMPLOYEE_NUMBER = 0; // employee number data is stored at index 0
+    static final int COL_LAST_NAME = 1; // last name data is stored at index 1
+    static final int COL_FIRST_NAME = 2; // first name data is stored at index 2
+    static final int COL_BIRTHDAY = 3; // birthday data is stored at index 3
+    static final int COL_HOURLY_RATE = 18; // hourly rate data is stored at index 18
+    
+    // Attendance record CSV file column indexes
+    static final int ATTENDANCE_EMPLOYEE_NUMBER = 0; // employee number data is stored at index 0
+    static final int ATTENDANCE_DATE = 3; // attendance date data is stored at index 3
+    static final int ATTENDANCE_LOGIN = 4; // login data is stored at index 4
+    static final int ATTENDANCE_LOGOUT = 5; // logout data is stored at index 5
+    
+    // Data Storage
+    static ArrayList<String[]> employeeData = new ArrayList<String[]>();
+    static ArrayList<String[]> attendanceData = new ArrayList<String[]>();
     
     // Cutoff start dates
     static String[] cutoffStart = {
@@ -121,16 +59,115 @@ public class MotorPH {
         "12/15/2024", "12/31/2024"
     };
     
+    // This method acts as a divider between pages
+    public static void printDivider() {
+        System.out.println("\n------------------------------\n");
+    }  
+
+    // This method reads and load the employee details CSV file
+    public static void loadEmployeeData() {
+        employeeData.clear();
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(EMPLOYEE_FILE))) {
+            String line;
+            
+            br.readLine(); // Read the first line (header) and skip it
+            
+            //Loop through the remaining lines of the file and add the data gathered to the data storage
+            while ((line = br.readLine()) != null) {
+                String[] employeeFileData = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+                employeeData.add(employeeFileData);
+            }
+            
+        } catch (IOException e) {
+            System.out.println("Error reading employee file");
+        }
+    }
+    
+    // This method reads and load the attendance CSV file
+    public static void loadAttendanceData() {
+        attendanceData.clear();
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(ATTENDANCE_FILE))) {
+            String line;
+            
+            br.readLine(); // Read the first line (header) and skip it
+            
+            //Loop through the remaining lines of the file and add the data gathered to the data storage
+            while((line = br.readLine()) != null) {
+                String[] attendanceFileData = line.split(",");
+                attendanceData.add(attendanceFileData);
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading attendance file");
+        }
+    }
+    
+    // This method finds and returns the employee data
+    public static String[] findEmployee(String employeeNumber) {
+        for (int i = 0; i < employeeData.size(); i++) {
+            String[] employeeFileData = employeeData.get(i);
+            
+            if (employeeFileData[COL_EMPLOYEE_NUMBER].trim().equals(employeeNumber)) {
+                return employeeFileData;
+            }
+        }
+        
+        return null;
+    }
+    
+    // This method is used to confirm if the employee is included in the MotorPH employee data
+    public static boolean employeeExists(String employeeNumber) {
+        return findEmployee(employeeNumber) != null;
+    }
+    
+    // This method displays the employee details consisting of their employee number, name, and birthday
+    public static boolean displayEmployeeDetails(String employeeNumber) {
+        String[] employeeFileData = findEmployee(employeeNumber);
+        
+        if (employeeFileData == null) {
+            return false;
+        }
+        
+        String fullName = employeeFileData[COL_FIRST_NAME].trim() + " " + employeeFileData[COL_LAST_NAME].trim();
+        
+        System.out.println("=== Employee Details ===\n");
+        System.out.println("Employee Number: " + employeeFileData[COL_EMPLOYEE_NUMBER].trim());
+        System.out.println("Eployee Name: " + fullName);
+        System.out.println("Birthday: " + employeeFileData[COL_BIRTHDAY].trim());
+        System.out.println();
+        
+        return true;
+    }
+    
+    // This method gets the hourly rate of the employees from the employee data
+    public static double getHourlyRate(String employeeNumber) {
+        String[] employeeFileData = findEmployee(employeeNumber);
+        
+        if (employeeFileData == null) {
+            return 0;
+        }
+        
+        String rateString = employeeFileData[COL_HOURLY_RATE].replace("\"", "").trim();
+        return Double.parseDouble(rateString);
+    }
+    
+    // This method reads the employee data and returns all employee numbers
+    public static ArrayList<String> getAllEmployeeNumbers() {
+        ArrayList<String> employeeNumbers = new ArrayList<String>();
+
+        for (int i = 0; i < employeeData.size(); i++) {
+            String[] employeeFileData = employeeData.get(i);
+            employeeNumbers.add(employeeFileData[COL_EMPLOYEE_NUMBER].trim());
+        }
+
+        return employeeNumbers;
+    }
+    
     // This method calculates the total hours worked by one employee within a specific cutoff date range
-    static double calculateHours(String empNum, String startDate, String endDate) throws Exception {
+    static double calculateHours(String employeeNumber, String startDate, String endDate) throws Exception {
         
         double totalHours = 0; // stores accumulated hours worked
-        
-        String attendanceFilePath = "C:\\Users\\admin\\Documents\\NetBeansProjects\\MotorPH\\src\\motorph\\Attendance_Record.csv";
-        
-        // Open the attendance CSV file
-        BufferedReader br = new BufferedReader(new FileReader(attendanceFilePath));
-        String line;
         
         // Date format in the CSV file
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -142,101 +179,57 @@ public class MotorPH {
         LocalDate start = LocalDate.parse(startDate, dateFormat);
         LocalDate end = LocalDate.parse(endDate, dateFormat);
         
-        br.readLine(); // skip the header row
-        
-        // Read each line in the attendance record
-        while ((line = br.readLine()) != null) {
-            
-            String[] data = line.split(","); // split CSV columns
-            
-            String employee = data[0]; // employee number column
-            LocalDate date = LocalDate.parse(data[3], dateFormat); // date column
-            
+        for (int i = 0; i < attendanceData.size(); i++) {
+            String[] attendanceFileData = attendanceData.get(i);
+
+            String employee = attendanceFileData[ATTENDANCE_EMPLOYEE_NUMBER].trim();
+            LocalDate date = LocalDate.parse(attendanceFileData[ATTENDANCE_DATE].trim(), dateFormat);
+
             // Check if record belongs to an employee and if date is within the cutoff
-            if (employee.equals(empNum) && !date.isBefore(start) && !date.isAfter(end)) {
-                
-                // Parse login and logout time
-                LocalTime login = LocalTime.parse(data[4], timeFormat);
-                LocalTime logout = LocalTime.parse(data[5], timeFormat);
-                
+            if (employee.equals(employeeNumber) && !date.isBefore(start) && !date.isAfter(end)) {
+                LocalTime login = LocalTime.parse(attendanceFileData[ATTENDANCE_LOGIN].trim(), timeFormat);
+                LocalTime logout = LocalTime.parse(attendanceFileData[ATTENDANCE_LOGOUT].trim(), timeFormat);
+
                 // Define employee work schedule
                 LocalTime workStart = LocalTime.of(8, 0);
                 LocalTime workEnd = LocalTime.of(17, 0);
-                
-                // Apply 10-minute grace period
-                // Salary deductions will only be applied if they log in from 8:11 AM onwards
-                if (login.isAfter(LocalTime.of(8, 10))) {
-                    // employee is late and keep their login time
-                } else {
-                    //employee logged in within grace period; not considered late
+                LocalTime graceLimit = LocalTime.of(8, 10);
+
+                // If employee logged in within grace period, attendance will be recorded as 8:00 AM
+                if (!login.isAfter(graceLimit)) {
                     login = workStart;
                 }
-                
-                // Do not include extra hours beyond 5:00 PM
+
+                // Ignore overtime after 5:00 PM
                 if (logout.isAfter(workEnd)) {
                     logout = workEnd;
                 }
-                
-                // Compute the total time between login and logout
+
                 double hoursWorked = Duration.between(login, logout).toMinutes() / 60.0;
-                
-                // Subtract the one hour lunch break
-                hoursWorked -= 1.0;
-                
-                // Add total hours
+
+                // Subtract 1 hour lunch break
+                hoursWorked = hoursWorked - 1.0;
+
+                // Prevent negative value
+                if (hoursWorked < 0) {
+                    hoursWorked = 0;
+                }
+
                 totalHours += hoursWorked;
             }
         }
         
-        br.close();
-        
         return totalHours;
     }
     
-    // This method finds the hourly rate of an employee from the employee CSV file
-    static double getHourlyRate(String empNum) throws Exception {
+    // This method calculates the gross salary by multiplying the hourly rate and total number of hours worked
+    static double calculateGrossSalary(String employeeNumber, double hoursWorked) throws Exception {
         
-        String filePath = "C:\\Users\\admin\\Documents\\NetBeansProjects\\MotorPH\\src\\motorph\\MotorPH_Employee_Details.csv";
-        BufferedReader br = new BufferedReader(new FileReader(filePath));
-        String line;
+        // Get the employee hourly rate from the employee data
+        double hourlyRate = getHourlyRate(employeeNumber);
         
-        br.readLine();
-        
-        while ((line = br.readLine()) != null) {
-            
-            // Split CSV line while ignoring commas inside quotation marks
-            String[] data = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-            
-            if (data[0].equals(empNum)) {
-                
-                // Get the hourly rate from column S of the CSV file
-                String rateString = data[18];
-                
-                // Remove quotation marks from the string
-                rateString = rateString.replace("\"", "").trim();
-                
-                // Convert the cleaned string into a double
-                double hourlyRate = Double.parseDouble(rateString);
-                
-                br.close();
-                
-                return hourlyRate;
-            }
-        }
-        br.close();
-        return 0; // if employee is not found
-    }
-    
-    // This method calculates the gross salary using hours worked and hourly rate
-    static double calculateGrossSalary(String empNum, double hoursWorked) throws Exception {
-        
-        // Get the employee hourly rate
-        double hourlyRate = getHourlyRate(empNum);
-        
-        // Compute gross salary
-        double grossSalary = hoursWorked * hourlyRate;
-        
-        return grossSalary;
+        // Gross salary = hours worked * hourly rate
+        return hoursWorked * hourlyRate;
     }
     
     // This method computes the SSS contribution based on the employee's monthly gross salary
@@ -370,10 +363,7 @@ public class MotorPH {
     // This method computes the employee's taxable income
     // Taxable income = monthly gross salary - mandatory deductions
     public static double computeTaxableIncome(double monthlyGross, double sss, double philHealth, double pagIBIG) {
-        
-        double taxableIncome = monthlyGross - (sss + philHealth + pagIBIG);
-        
-        return taxableIncome;
+        return monthlyGross - (sss + philHealth + pagIBIG);
     }
     
     // This method computes the employee's withholding tax based on the taxable income
@@ -416,69 +406,31 @@ public class MotorPH {
         }
     }
     
-    // This method reads the employee CSV file and returns all employee numbers
-    public static ArrayList<String> getAllEmployeeNumbers() {
-
-        ArrayList<String> employeeNumbers = new ArrayList<>();
-
-        try {
-            String filePath = "C:\\Users\\admin\\Documents\\NetBeansProjects\\MotorPH\\src\\motorph\\MotorPH_Employee_Details.csv";
-            BufferedReader br = new BufferedReader(new FileReader(filePath));
-
-            String line;
-
-            br.readLine(); // skip header row
-
-            while ((line = br.readLine()) != null) {
-
-                // Split CSV line while ignoring commas inside quotation marks
-                String[] data = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-                // Get employee number from column A
-                String empNum = data[0].trim();
-
-                // Add employee number to the list
-                employeeNumbers.add(empNum);
-            }
-
-            br.close();
-
-        } catch (Exception e) {
-            System.out.println("Error reading employee file.");
-        }
-
-        return employeeNumbers;
-    }
-    
     // This method displays employee details and processes payroll for one employee
-    public static void processPayrollForEmployee(String empNum) throws Exception {
+    public static void processPayrollForEmployee(String employeeNumber) throws Exception {
 
         // Check if employee exists first
-        if (!employeeExists(empNum)) {
-            System.out.println("\nEmployee number not found: " + empNum);
+        if (!employeeExists(employeeNumber)) {
+            System.out.println("Employee number does not exist.");
             return;
         }
+        
+        System.out.println("Processing payroll for employee: " + employeeNumber);
+        System.out.println();
 
         // Display employee details
-        if (!displayEmployeeDetails(empNum)) {
-            System.out.println("\nEmployee number not found: " + empNum);
-            return;
-        }
+        displayEmployeeDetails(employeeNumber);
 
         // Process cutoffs two at a time
         for (int i = 0; i < cutoffStart.length; i += 2) {
 
-            // Calculate total hours for the first cutoff
-            double firstCutoffHours = calculateHours(empNum, cutoffStart[i], cutoffEnd[i]);
+            // Calculate total hours worked for the 2 cutoffs every month
+            double firstCutoffHours = calculateHours(employeeNumber, cutoffStart[i], cutoffEnd[i]);
+            double secondCutoffHours = calculateHours(employeeNumber, cutoffStart[i + 1], cutoffEnd[i + 1]);
 
-            // Calculate total hours for the second cutoff
-            double secondCutoffHours = calculateHours(empNum, cutoffStart[i + 1], cutoffEnd[i + 1]);
-
-            // Calculate gross salary for the first cutoff
-            double firstCutoffGross = calculateGrossSalary(empNum, firstCutoffHours);
-
-            // Calculate gross salary for the second cutoff
-            double secondCutoffGross = calculateGrossSalary(empNum, secondCutoffHours);
+            // Calculate gross salary for the two cutoffs every month
+            double firstCutoffGross = calculateGrossSalary(employeeNumber, firstCutoffHours);
+            double secondCutoffGross = calculateGrossSalary(employeeNumber, secondCutoffHours);
 
             // Add both cutoff gross salaries to get the monthly gross salary
             double monthlyGross = firstCutoffGross + secondCutoffGross;
@@ -497,150 +449,170 @@ public class MotorPH {
             double secondCutoffNetSalary = secondCutoffGross - totalDeductions;
 
             // Display payroll results
-            System.out.println("\nCutoff Date: " + cutoffStart[i] + " to " + cutoffEnd[i]);
+            System.out.println("Cutoff Date: " + cutoffStart[i] + " to " + cutoffEnd[i]);
             System.out.println("Total Hours Worked: " + firstCutoffHours);
             System.out.println("Gross Salary: " + firstCutoffGross);
-            System.out.println("Net Salary: " + firstCutoffGross);
+            System.out.println("Net Salary: " + firstCutoffGross); // First cutoff net salary does not have any deductions
 
             System.out.println("\nCutoff Date: " + cutoffStart[i + 1] + " to " + cutoffEnd[i + 1]);
             System.out.println("Total Hours Worked: " + secondCutoffHours);
             System.out.println("Gross Salary: " + secondCutoffGross);
 
             System.out.println("Each Deduction:");
-            System.out.println(" SSS: " + sss);
-            System.out.println(" PhilHealth: " + philHealth);
-            System.out.println(" Pag-IBIG: " + pagIBIG);
-            System.out.println(" Tax: " + tax);
+            System.out.println("  SSS: " + sss);
+            System.out.println("  PhilHealth: " + philHealth);
+            System.out.println("  Pag-IBIG: " + pagIBIG);
+            System.out.println("  Tax: " + tax);
             System.out.println("Total Deductions: " + totalDeductions);
             System.out.println("Net Salary: " + secondCutoffNetSalary);
 
-            System.out.println("\n------------------------------");
+            printDivider();
         }
     }
-
+    
+    // EMPLOYEE LOGGED IN MENU
+    public static void employeeMenu(Scanner scanner) {
+        System.out.println("Employee logged in\n");
+        
+        // Display options
+        System.out.println("[1] Enter your employee number: ");
+        System.out.println("[2] Exit the program");
+        
+        // Takes user input for the next action
+        System.out.print("\nSelect option (1/2): ");
+        String choice = scanner.nextLine();
+        
+        printDivider();
+        
+        // Takes user input for their employee number to log in
+        if (choice.equals("1")) {
+            System.out.print("Enter your employee number: ");
+            String employeeNumber = scanner.nextLine();
+            
+            printDivider();
+            
+            if (!displayEmployeeDetails(employeeNumber)) {
+                System.out.println("Employee number does not exist.");
+            }
+        // User chose to exit the program
+        } else if (choice.equals("2")) {
+            System.out.println("Program closed.");
+            System.exit(0);
+        // User input is invalid
+        } else {
+            System.out.println("Invalid choice.");
+            System.exit(0);
+        }
+    }
+    
+    // PAYROLL STAFF LOGGED IN MENU
+    public static void payrollStaffMenu(Scanner scanner) throws Exception {
+        System.out.println("Payroll staff logged in\n");
+        
+        // Display options
+        System.out.println("[1] Process Payroll");
+        System.out.println("[2] Exit the program");
+        
+        // Takes user input for the next action
+        System.out.print("\nSelect option (1/2): ");
+        String choice = scanner.nextLine();
+        
+        printDivider();
+        
+        // User chose to process payroll
+        if (choice.equals("1")) {
+            processPayrollMenu(scanner);
+        // User chose to exit the program
+        } else if (choice.equals("2")) {
+            System.out.println("Program closed.");
+            System.exit(0);
+        // User input is invalid
+        } else {
+            System.out.println("Invalid choice.");
+            System.exit(0);
+        }
+    }
+    
+    // PROCESS PAYROLL MENU
+    public static void processPayrollMenu(Scanner scanner) throws Exception {
+        System.out.println("=== Process Payroll ===\n");
+        
+        // Display options
+        System.out.println("[1] One employee");
+        System.out.println("[2] All employees");
+        System.out.println("[3] Exit the program");
+        
+        // Takes user input for the next action
+        System.out.print("\nSelect option (1/2/3): ");
+        String choice = scanner.nextLine();
+        
+        // User chose to process payroll for one employee
+        if (choice.equals("1")) {
+            System.out.print("\nEnter the employee number: ");
+            String employeeNumber = scanner.nextLine();
+            
+            printDivider();
+            processPayrollForEmployee(employeeNumber);
+        
+        // User chose to process payroll for all employees
+        } else if (choice.equals("2")) {
+            ArrayList<String> allEmployees = getAllEmployeeNumbers();
+            
+            printDivider();
+            
+            for (int i = 0; i < allEmployees.size(); i++) {
+                String employeeNumber = allEmployees.get(i);
+                processPayrollForEmployee(employeeNumber);
+            }
+        
+        // User chose to exit the program
+        } else if (choice.equals("3")) {
+            printDivider();
+            System.out.println("Program closed.");
+            System.exit(0);
+            
+        // User input is invalid
+        } else {
+            printDivider();
+            System.out.println("Invalid choice.");
+            System.exit(0);
+        }
+    }
+    
+    // MAIN METHOD
     public static void main(String[] args) throws Exception {
+        
+        Scanner scanner = new Scanner(System.in);
+        
+        //Read the CSV files
+        loadEmployeeData();
+        loadAttendanceData();
         
         System.out.println("==== MotorPH Payroll Portal ====\n");
         
         // Log in screen
-        Scanner scanner = new Scanner(System.in);
+        // Takes user input for their username and password
         System.out.print("Enter your username: ");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine();   
         System.out.print("Enter your password: ");
         String password = scanner.nextLine();
         
-        // Employee logged in
+        printDivider();
+        
+        // Employee is logged in
         if (username.equals("employee") && password.equals("12345")) {
-            System.out.println("\n-------------------------\n");            
-            System.out.println("Employee logged in\n");
-            
-            // Display options
-            System.out.println("[1]Enter your employee number");
-            System.out.println("[2]Exit the program");
-            
-            // Takes user input for options
-            System.out.print("\nSelect option (1/2): ");
-            String choice = scanner.nextLine();
-            
-            System.out.println("\n-------------------------\n");
-            
-            // User chose to enter their employee number
-            if (choice.equals("1")) {
-                
-                // Asks the user input for the employee number
-                System.out.print("Enter your employee number: ");
-                String empNum = scanner.nextLine();
-                
-                System.out.println("\n-------------------------\n");
-                
-                if (employeeExists(empNum)) {
-                    if (!displayEmployeeDetails(empNum)) {
-                        System.out.println("\nEmployee number not found.");
-                    }
-                } else {
-                    System.out.println("\nEmployee number not found");
-                }
-            } else if (choice.equals("2")) {
-                System.out.println("Program closed");
-                System.exit(0);
-            } else {
-                System.out.println("\nInvalid choice");
-            }
-        // Payroll staff logged in
+            employeeMenu(scanner);
+        
+        // Payroll staff is logged in
         } else if (username.equals("payroll_staff") && password.equals("12345")) {
-
-            System.out.println("\n-------------------------\n");
-            System.out.println("Payroll staff logged in");
-            
-            // Display options
-            System.out.println("\n[1]Process Payroll");
-            System.out.println("[2]Exit the program");
-            
-            System.out.print("\nSelect Option (1/2): ");
-            String choice2 = scanner.nextLine();
-            
-            System.out.println("\n-------------------------");
-            
-            // User chose to process payroll
-            if (choice2.equals("1")) {
-                System.out.println("\n=== Process Payroll ===\n");
-                
-                // Display Options
-                System.out.println("[1]One employee");
-                System.out.println("[2]All employees");
-                System.out.println("[3]Exit the program");
-                
-                System.out.print("\nSelect Option (1/2/3): ");
-                String choice3 = scanner.nextLine();
-                
-                // User wants to process payroll for a certain employee
-                if (choice3.equals("1")) {
-                    System.out.print("\nEnter employee number: ");
-                    String empNum = scanner.nextLine();
-                    
-                    processPayrollForEmployee(empNum);
-                    
-                // User wants process payroll for all employee    
-                } else if (choice3.equals("2")) {
-                    
-                    // Get all employee numbers from the CSV file
-                    ArrayList<String> allEmployees = getAllEmployeeNumbers();
-
-                    // Loop through each employee number
-                    for (String empNum : allEmployees) {
-
-                        System.out.println("\n========================================");
-                        System.out.println("Processing payroll for employee: " + empNum);
-                        System.out.println("========================================\n");
-
-                        // Process payroll for the current employee
-                        processPayrollForEmployee(empNum);
-                    }
-                    
-                // User wants to exit the program
-                } else if (choice3.equals("3")) {
-                    System.out.println("\nProgram closed.");
-                    System.exit(0);
-                
-                // The user input is invalid
-                } else {
-                    System.out.println("\nInvalid choice. Closing the program");
-                    System.exit(0);
-                }
-                    
-            // User wants to exit the program
-            } else if (choice2.equals("2")) {
-                    System.out.println("\nProgram closed.");
-                    System.exit(0);
-            }
+            payrollStaffMenu(scanner);
         
         // User input is invalid
         } else {
-            System.out.println("\nIncorrect username and/or password");
+            System.out.println("Incorrect username and/or password");
             System.exit(0);
         }
         
         scanner.close();
     }
-    
 }
