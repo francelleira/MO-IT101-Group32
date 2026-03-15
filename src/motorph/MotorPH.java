@@ -409,6 +409,7 @@ public class MotorPH {
         
         // If taxable income is above 666,667
         // Tax = 200,833.33  + 35% of the excess over 666,667
+        
         else {
             return 200833.33 + (taxableIncome - 666667) * 0.35;
         }
@@ -491,8 +492,8 @@ public class MotorPH {
             // Compute total deductions
             double totalDeductions = sss + philHealth + pagIBIG + tax;
 
-            // Compute monthly net salary
-            double netSalary = monthlyGross - totalDeductions;
+            // Compute the net salary for the second cutoff
+            double secondCutoffNetSalary = secondCutoffGross - totalDeductions;
 
             // Display payroll results
             System.out.println("\nCutoff Date: " + cutoffStart[i] + " to " + cutoffEnd[i]);
@@ -505,12 +506,12 @@ public class MotorPH {
             System.out.println("Gross Salary: " + secondCutoffGross);
 
             System.out.println("Each Deduction:");
-            System.out.println(" • SSS: " + sss);
-            System.out.println(" • PhilHealth: " + philHealth);
-            System.out.println(" • Pag-IBIG: " + pagIBIG);
-            System.out.println(" • Tax: " + tax);
+            System.out.println(" SSS: " + sss);
+            System.out.println(" PhilHealth: " + philHealth);
+            System.out.println(" Pag-IBIG: " + pagIBIG);
+            System.out.println(" Tax: " + tax);
             System.out.println("Total Deductions: " + totalDeductions);
-            System.out.println("Net Salary: " + netSalary);
+            System.out.println("Net Salary: " + secondCutoffNetSalary);
 
             System.out.println("\n------------------------------");
         }
@@ -542,6 +543,7 @@ public class MotorPH {
             
             System.out.println("\n-------------------------\n");
             
+            // User chose to enter their employee number
             if (choice.equals("1")) {
                 
                 // Asks the user input for the employee number
@@ -569,6 +571,7 @@ public class MotorPH {
             System.out.println("\n-------------------------\n");
             System.out.println("Payroll staff logged in");
             
+            // Display options
             System.out.println("\n[1]Process Payroll");
             System.out.println("[2]Exit the program");
             
@@ -580,6 +583,8 @@ public class MotorPH {
             // User chose to process payroll
             if (choice2.equals("1")) {
                 System.out.println("\n=== Process Payroll ===\n");
+                
+                // Display Options
                 System.out.println("[1]One employee");
                 System.out.println("[2]All employees");
                 System.out.println("[3]Exit the program");
@@ -592,70 +597,7 @@ public class MotorPH {
                     System.out.print("\nEnter employee number: ");
                     String empNum = scanner.nextLine();
                     
-                    if (employeeExists(empNum)) {
-                        
-                        System.out.println("");
-                        if (!displayEmployeeDetails(empNum)) {
-                            System.out.println("\nEmployee number not found.");
-                        }
-                        
-                        // Process cutoff two at a time
-                        // i = first cutoff of the month
-                        // i + 1 = second cutoff of the month
-                        for (int i = 0; i < cutoffStart.length; i += 2) {
-                            
-                            // Calculate total hours for the first cutoff
-                            double firstCutoffHours = calculateHours(empNum, cutoffStart[i], cutoffEnd[i]);
-                            
-                            // Calculate total hours for the second cutoff
-                            double secondCutoffHours = calculateHours(empNum, cutoffStart[i + 1], cutoffEnd[i +1]);
-                            
-                            // Calculate gross salary for the first cutoff
-                            double firstCutoffGross = calculateGrossSalary(empNum, firstCutoffHours);
-                            
-                            // Calculate gross salary for the second cutoff
-                            double secondCutoffGross = calculateGrossSalary(empNum, secondCutoffHours);
-                            
-                            // Add both cutoff gross salaries to get the monthly gross salary
-                            double monthlyGross = firstCutoffGross + secondCutoffGross;
-                            
-                            // Compute monthly deductions based on monthly gross salary
-                            double sss = computeSSS(monthlyGross);
-                            double philHealth = computePhilHealth(monthlyGross);
-                            double pagIBIG = computePagIBIG(monthlyGross);
-                            double taxableIncome = computeTaxableIncome(monthlyGross, sss, philHealth, pagIBIG);
-                            double tax = computeTax(taxableIncome);
-                            
-                            // Compute total deductions
-                            double totalDeductions = sss + philHealth + pagIBIG + tax;
-                            
-                            // Compute net salary for each month
-                            double netSalary = monthlyGross - totalDeductions;
-                            
-                            // Display results
-                            System.out.println("\nCutoff Date: " + cutoffStart[i] + " to " + cutoffEnd[i]);
-                            System.out.println("Total Hours Worked: " + firstCutoffHours);
-                            System.out.println("Gross Salary: " + firstCutoffGross);
-                            System.out.println("Net Salary: " + firstCutoffGross);
-                            
-                            System.out.println("\nCutoff Date: " + cutoffStart[i + 1] + " to " + cutoffEnd[i + 1]);
-                            System.out.println("Total Hours Worked: " + secondCutoffHours);
-                            System.out.println("Gross Salary: " + secondCutoffGross);
-                            
-                            System.out.println("Each Deduction:");
-                            System.out.println(" • SSS: " + sss);
-                            System.out.println(" • PhilHealth: " + philHealth);
-                            System.out.println(" • Pag-IBIG: " + pagIBIG);
-                            System.out.println(" • Tax: " + tax);
-                            System.out.println("Total Deductions: " + totalDeductions);
-                            System.out.println("Net Salary: " + netSalary);
-                            
-                            System.out.println("\n------------------------------");
-                        }
-
-                    } else {
-                        System.out.println("\nEmployee number not found");
-                    }
+                    processPayrollForEmployee(empNum);
                     
                 // User wants process payroll for all employee    
                 } else if (choice3.equals("2")) {
@@ -678,6 +620,7 @@ public class MotorPH {
                 } else if (choice3.equals("3")) {
                     System.out.println("\nProgram closed.");
                     System.exit(0);
+                
                 // The user input is invalid
                 } else {
                     System.out.println("\nInvalid choice. Closing the program");
@@ -689,6 +632,8 @@ public class MotorPH {
                     System.out.println("\nProgram closed.");
                     System.exit(0);
             }
+        
+        // User input is invalid
         } else {
             System.out.println("\nIncorrect username and/or password");
             System.exit(0);
