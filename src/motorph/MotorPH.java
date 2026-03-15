@@ -164,10 +164,11 @@ public class MotorPH {
                 LocalTime workEnd = LocalTime.of(17, 0);
                 
                 // Apply 10-minute grace period
+                // Salary deductions will only be applied if they log in from 8:11 AM onwards
                 if (login.isAfter(LocalTime.of(8, 10))) {
                     // employee is late and keep their login time
                 } else {
-                    //employee logged in within grace period
+                    //employee logged in within grace period; not considered late
                     login = workStart;
                 }
                 
